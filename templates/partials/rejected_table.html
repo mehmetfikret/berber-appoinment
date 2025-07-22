@@ -1,0 +1,14 @@
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+  {% for r in rejected %}
+  <div class="col">
+    <div class="card border-danger shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-title text-danger">📞 {{ r.phone }}</h6>
+        <p class="card-text mb-1"><strong>Hizmet:</strong> {{ r.service }}</p>
+        <p class="card-text mb-1"><strong>Tarih:</strong> {{ r.date }}</p>
+        <p class="card-text mb-0"><strong>Saat:</strong> {{ r.time }}</p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>

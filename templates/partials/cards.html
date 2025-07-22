@@ -1,0 +1,28 @@
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+  {% for r in card_list %}
+  <div class="col">
+    <div class="card border-{{ title_color }} shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h6 class="card-title text-{{ title_color }}">📞 {{ r.phone }}</h6>
+          {% if r.date == today %}
+            <span class="badge bg-success">Bugün</span>
+          {% elif r.date == tomorrow %}
+            <span class="badge bg-warning text-dark">Yarın</span>
+          {% endif %}
+        </div>
+        <p class="card-text mb-1"><strong>Hizmet:</strong> {{ r.service }}</p>
+        <p class="card-text mb-1"><strong>Tarih:</strong> {{ r.date }}</p>
+        <p class="card-text mb-2"><strong>Saat:</strong> {{ r.time }}</p>
+
+        {% if r.status == 'pending' %}
+        <div class="d-flex justify-content-end gap-2">
+          <a href="/update/{{ r.id }}/approved" class="btn btn-sm btn-success">Onayla</a>
+          <a href="/update/{{ r.id }}/rejected" class="btn btn-sm btn-danger">Reddet</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>

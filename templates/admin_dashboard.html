@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Panel</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <style>
+  .nav-link.bg-warning {
+    background-color: #ffc107;
+    color: #212529;
+  }
+  .nav-link.bg-warning.active {
+    background-color: #504949 !important;
+    color: #fff !important;
+  }
+
+  .nav-link.bg-success {
+    background-color: #198754;
+    color: #fff;
+  }
+  .nav-link.bg-success.active {
+    background-color: #504949 !important;
+    color: #fff !important;
+  }
+
+  .nav-link.bg-danger {
+    background-color: #dc3545;
+    color: #fff;
+  }
+  .nav-link.bg-danger.active {
+    background-color: #504949 !important;
+    color: #fff !important;
+  }
+</style>
+
+
+</head>
+<body class="bg-light">
+
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3>Randevular</h3>
+      <a href="/admin/week" class="btn btn-outline-primary me-2">Haftalık Görünüm</a>
+      <a href="/logout" class="btn btn-outline-dark">Çıkış Yap</a>
+    </div>
+
+    <form method="get" class="mb-3 d-flex align-items-center gap-2">
+  <label for="date" class="form-label m-0">Tarih:</label>
+  <input type="date" name="date" id="date" value="{{ selected_date }}" class="form-control" style="max-width: 200px;" onchange="this.form.submit()">
+  <a href="/admin?date=all" class="btn btn-secondary btn-sm">Tümü</a>
+
+</form>
+
+
+
+    <!--SEKME BUTONLARI-->
+  <ul class="nav nav-tabs mb-4" id="randevuTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active bg-warning" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">
+      Beklemede ({{ count_pending }})
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link bg-success" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button" role="tab">
+      Onaylananlar ({{ count_approved }})
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link bg-danger" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab">
+      Reddedilenler ({{ count_rejected }})
+    </button>
+  </li>
+</ul>
+
+
+    <!-- SEKME İÇERİKLERİ -->
+    <div class="tab-content">
+      <!-- Beklemede -->
+      <div class="tab-pane fade show active" id="pending" role="tabpanel">
+        {% set card_list = pending %}
+        {% set title_color = 'warning' %}
+        {% include 'partials/cards.html' %}
+
+      </div>
+
+      <!-- Onaylananlar -->
+      <div class="tab-pane fade" id="approved" role="tabpanel">
+        {% set card_list = approved %}
+        {% set title_color = 'success' %}
+        {% include 'partials/cards.html' %}
+
+      </div>
+
+      <!-- Reddedilenler -->
+      <div class="tab-pane fade" id="rejected" role="tabpanel">
+        {% set card_list = rejected %}
+        {% set title_color = 'danger' %}
+        {% include 'partials/cards.html' %}
+
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

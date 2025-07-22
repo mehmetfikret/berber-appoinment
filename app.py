@@ -255,8 +255,11 @@ def admin_week():
         c.execute('''SELECT Appointments.id, Users.phone, service, date, time, status 
                      FROM Appointments JOIN Users ON Appointments.user_id = Users.id
                      WHERE date = ?''', (day,))
-        weekly_data[day] = c.fetchall()
-
+        results = c.fetchall()
+        # Saat sıralaması
+        sorted_results = sorted(results, key=lambda r: datetime.strptime(r['time'], "%H:%M"))
+        weekly_data[day] = sorted_results
+    
     conn.close()
     return render_template('admin_week.html', week=weekly_data)
 

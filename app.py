@@ -76,8 +76,8 @@ Randevuları admin panelinden yönetebilirsiniz.
 def get_available_slots(date):
     # Tüm mevcut saatleri oluştur (08:00 - 18:00 arası 30 dakika aralıklarla)
     slots = []
-    start_time = datetime.strptime("08:00", "%H:%M")
-    for i in range(20):  # 20 slot = 10 saat
+    start_time = datetime.strptime("09:00", "%H:%M")
+    for i in range(22):  # 20 slot = 10 saat
         slot_time = (start_time + timedelta(minutes=30*i)).strftime("%H:%M")
         slots.append(slot_time)
 
@@ -153,7 +153,7 @@ def user_dashboard():
                 error_message = "⚠️ Pazar günleri randevu alınamaz. Lütfen başka bir gün seçin."
 
         # Saat kontrolü
-        if not error_message and (time < "08:00" or time > "18:00"):
+        if not error_message and (time < "09:00" or time > "20:00"):
             error_message = "⏰ Geçersiz saat. Lütfen 08:00 - 18:00 arasında bir saat seçin."
         
         # Mevcut randevu var mı kontrolü (sadece onaylanmış ve bekleyen randevular)

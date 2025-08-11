@@ -7,7 +7,7 @@ from datetime import datetime
 from datetime import timedelta
 from dotenv import load_dotenv
 import os
-
+port = int(os.environ.get("PORT", 10000))
 load_dotenv()
 
 PAZAR_KAPALI = True

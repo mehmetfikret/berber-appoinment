@@ -20,10 +20,10 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 
 # PostgreSQL bağlantı bilgileri
 DB_CONFIG = {
-    'host': os.getenv('DB_HOST'),
-    'dbname': os.getenv('DB_NAME'),
-    'user': os.getenv('DB_USER'),
-    'password': os.getenv('DB_PASSWORD'),
+    'host': "dpg-d2k6qp3uibrs73ehlik0-a",
+    'dbname': "berber_db",
+    'user': "berber_db_user",
+    'password': "7aZr61mVi3WFYy6ZZrZS7HASwHKxOVvu",
     'port': os.getenv('DB_PORT', '5432')
 }
 

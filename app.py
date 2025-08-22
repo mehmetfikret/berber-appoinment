@@ -30,13 +30,22 @@ DB_CONFIG = {
 def get_db():
     """PostgreSQL bağlantısı oluştur"""
     try:
-        conn = psycopg.connect(
-            host=DB_CONFIG['host'],
-            dbname=DB_CONFIG['dbname'],
-            user=DB_CONFIG['user'],
-            password=DB_CONFIG['password'],
-            port=DB_CONFIG['port']
-        )
+        # Önce DATABASE_URL'yi kontrol et (Render için önerilen)
+        database_url = os.getenv('DATABASE_URL')
+        if database_url:
+            conn = psycopg.connect(database_url)
+            print("✅ DATABASE_URL ile bağlantı kuruldu")
+        else:
+            # Fallback olarak ayrı parametreleri kullan
+            conn = psycopg.connect(
+                host=DB_CONFIG['host'],
+                dbname=DB_CONFIG['dbname'],
+                user=DB_CONFIG['user'],
+                password=DB_CONFIG['password'],
+                port=DB_CONFIG['port']
+            )
+            print("✅ Ayrı parametreler ile bağlantı kuruldu")
+        
         return conn
     except Exception as e:
         print(f"Veritabanı bağlantı hatası: {e}")

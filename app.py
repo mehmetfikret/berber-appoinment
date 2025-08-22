@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, session
-import psycopg2
-import psycopg2.extras
+import psycopg
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -31,9 +30,15 @@ DB_CONFIG = {
 def get_db():
     """PostgreSQL bağlantısı oluştur"""
     try:
-        conn = psycopg2.connect(**DB_CONFIG)
+        conn = psycopg.connect(
+            host=DB_CONFIG['host'],
+            dbname=DB_CONFIG['database'],
+            user=DB_CONFIG['user'],
+            password=DB_CONFIG['password'],
+            port=DB_CONFIG['port']
+        )
         return conn
-    except psycopg2.Error as e:
+    except psycopg.Error as e:
         print(f"Veritabanı bağlantı hatası: {e}")
         return None
 
@@ -70,7 +75,7 @@ def init_database():
         conn.commit()
         print("✅ Veritabanı tabloları başarıyla oluşturuldu.")
         
-    except psycopg2.Error as e:
+    except psycopg.Error as e:
         print(f"Tablo oluşturma hatası: {e}")
         conn.rollback()
     finally:
@@ -150,7 +155,7 @@ def get_available_slots(date):
         
         return slots, taken
         
-    except psycopg2.Error as e:
+    except psycopg.Error as e:
         print(f"Slot sorgulama hatası: {e}")
         return slots, []
     finally:
@@ -171,7 +176,7 @@ def login():
                 cur.execute('INSERT INTO Users (phone, is_admin) VALUES (%s, %s) ON CONFLICT (phone) DO NOTHING', 
                            (phone, False))
                 conn.commit()
-            except psycopg2.Error as e:
+            except psycopg.Error as e:
                 print(f"Kullanıcı kayıt hatası: {e}")
                 conn.rollback()
             finally:
@@ -195,7 +200,7 @@ def user_dashboard():
         return "Veritabanı bağlantı hatası", 500
 
     try:
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur = conn.cursor()
 
         # Kullanıcının ID'sini al
         cur.execute('SELECT id FROM Users WHERE phone = %s', (session['phone'],))
@@ -203,7 +208,7 @@ def user_dashboard():
         if not user_row:
             return "Kullanıcı bulunamadı", 400
 
-        user_id = user_row['id']
+        user_id = user_row[0]
 
         if request.method == 'POST':
             service = request.form['service']
@@ -262,7 +267,7 @@ def user_dashboard():
                                slots=all_slots,
                                taken=taken_slots)
 
-    except psycopg2.Error as e:
+    except psycopg.Error as e:
         print(f"Dashboard hatası: {e}")
         return "Bir hata oluştu", 500
     finally:
@@ -283,7 +288,7 @@ def admin_dashboard():
         return "Veritabanı bağlantı hatası", 500
 
     try:
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur = conn.cursor()
 
         if selected_date == "all" or not selected_date:
             cur.execute('''SELECT a.id, u.phone, a.service, a.date, a.time, a.status 
@@ -295,10 +300,10 @@ def admin_dashboard():
 
         all_appointments = cur.fetchall()
 
-        # Randevuları ayır
-        pending = [r for r in all_appointments if r['status'] == 'pending']
-        approved = [r for r in all_appointments if r['status'] == 'approved']
-        rejected = [r for r in all_appointments if r['status'] == 'rejected']
+        # Randevuları ayır - psycopg3'te tuple format
+        pending = [r for r in all_appointments if r[5] == 'pending']
+        approved = [r for r in all_appointments if r[5] == 'approved']
+        rejected = [r for r in all_appointments if r[5] == 'rejected']
 
         return render_template('admin_dashboard.html',
                                pending=pending,
@@ -311,7 +316,7 @@ def admin_dashboard():
                                today=today,
                                tomorrow=tomorrow)
 
-    except psycopg2.Error as e:
+    except psycopg.Error as e:
         print(f"Admin dashboard hatası: {e}")
         return "Bir hata oluştu", 500
     finally:
@@ -331,7 +336,7 @@ def admin_week():
         return "Veritabanı bağlantı hatası", 500
 
     try:
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur = conn.cursor()
 
         weekly_data = {}
         for day in week_dates:
@@ -339,13 +344,13 @@ def admin_week():
                            FROM Appointments a JOIN Users u ON a.user_id = u.id
                            WHERE a.date = %s''', (day,))
             results = cur.fetchall()
-            # Saat sıralaması
-            sorted_results = sorted(results, key=lambda r: datetime.strptime(r['time'], "%H:%M"))
+            # Saat sıralaması - psycopg3'te tuple format
+            sorted_results = sorted(results, key=lambda r: datetime.strptime(r[4], "%H:%M"))
             weekly_data[day] = sorted_results
         
         return render_template('admin_week.html', week=weekly_data)
 
-    except psycopg2.Error as e:
+    except psycopg.Error as e:
         print(f"Haftalık görünüm hatası: {e}")
         return "Bir hata oluştu", 500
     finally:
@@ -363,7 +368,7 @@ def update_status(id, status):
             cur = conn.cursor()
             cur.execute('UPDATE Appointments SET status = %s WHERE id = %s', (status, id))
             conn.commit()
-        except psycopg2.Error as e:
+        except psycopg.Error as e:
             print(f"Durum güncelleme hatası: {e}")
             conn.rollback()
         finally:
@@ -382,7 +387,7 @@ def cancel_appointment(id):
         return redirect('/dashboard')
 
     try:
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur = conn.cursor()
 
         # Önce giriş yapan kullanıcının ID'sini al
         cur.execute('SELECT id FROM Users WHERE phone = %s', (session['phone'],))
@@ -390,7 +395,7 @@ def cancel_appointment(id):
         if not user:
             return "Kullanıcı bulunamadı", 400
 
-        user_id = user['id']
+        user_id = user[0]
 
         # Randevu gerçekten bu kullanıcıya mı ait? Kontrol et
         cur.execute('SELECT id FROM Appointments WHERE id = %s AND user_id = %s', (id, user_id))
@@ -401,7 +406,7 @@ def cancel_appointment(id):
             cur.execute('UPDATE Appointments SET status = %s WHERE id = %s', ('cancelled', id))
             conn.commit()
 
-    except psycopg2.Error as e:
+    except psycopg.Error as e:
         print(f"İptal işlemi hatası: {e}")
         conn.rollback()
     finally:

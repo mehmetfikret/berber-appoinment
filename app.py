@@ -244,7 +244,18 @@ def user_dashboard():
 
             if error_message:
                 cur.execute('SELECT id, service, date, time, status FROM Appointments WHERE user_id = %s', (user_id,))
-                appointments = cur.fetchall()
+                appointments_raw = cur.fetchall()
+                # Tuple'ları dictionary'ye çevir
+                appointments = []
+                for r in appointments_raw:
+                    appointments.append({
+                        'id': r[0],
+                        'service': r[1], 
+                        'date': r[2],
+                        'time': r[3],
+                        'status': r[4]
+                    })
+                
                 all_slots, taken_slots = get_available_slots(selected_date)
                 return render_template('user_dashboard.html',
                                        appointments=appointments,
@@ -262,9 +273,21 @@ def user_dashboard():
             send_email_notification(service, date, time, session['phone'])
             return redirect('/dashboard')
 
-        # GET işlemi
+        # GET işlemi - Randevuları dictionary formatında döndür
         cur.execute('SELECT id, service, date, time, status FROM Appointments WHERE user_id = %s', (user_id,))
-        appointments = cur.fetchall()
+        appointments_raw = cur.fetchall()
+        
+        # Tuple'ları dictionary'ye çevir
+        appointments = []
+        for r in appointments_raw:
+            appointments.append({
+                'id': r[0],
+                'service': r[1], 
+                'date': r[2],
+                'time': r[3],
+                'status': r[4]
+            })
+        
         all_slots, taken_slots = get_available_slots(selected_date)
 
         return render_template('user_dashboard.html',
@@ -307,15 +330,24 @@ def admin_dashboard():
                            FROM Appointments a JOIN Users u ON a.user_id = u.id
                            WHERE a.date = %s''', (selected_date,))
 
-        all_appointments = cur.fetchall()
+        all_appointments_raw = cur.fetchall()
 
-        # Randevuları ayır - psycopg3'te tuple format
-        pending = [{'id': r[0], 'phone': r[1], 'service': r[2], 'date': r[3], 'time': r[4], 'status': r[5]} 
-                   for r in all_appointments if r[5] == 'pending']
-        approved = [{'id': r[0], 'phone': r[1], 'service': r[2], 'date': r[3], 'time': r[4], 'status': r[5]} 
-                    for r in all_appointments if r[5] == 'approved']
-        rejected = [{'id': r[0], 'phone': r[1], 'service': r[2], 'date': r[3], 'time': r[4], 'status': r[5]} 
-                    for r in all_appointments if r[5] == 'rejected']
+        # Tuple'ları dictionary'ye çevir
+        all_appointments = []
+        for r in all_appointments_raw:
+            all_appointments.append({
+                'id': r[0],
+                'phone': r[1],
+                'service': r[2],
+                'date': r[3],
+                'time': r[4],
+                'status': r[5]
+            })
+
+        # Randevuları duruma göre ayır
+        pending = [r for r in all_appointments if r['status'] == 'pending']
+        approved = [r for r in all_appointments if r['status'] == 'approved']
+        rejected = [r for r in all_appointments if r['status'] == 'rejected']
 
         return render_template('admin_dashboard.html',
                                pending=pending,
@@ -355,9 +387,22 @@ def admin_week():
             cur.execute('''SELECT a.id, u.phone, a.service, a.date, a.time, a.status 
                            FROM Appointments a JOIN Users u ON a.user_id = u.id
                            WHERE a.date = %s''', (day,))
-            results = cur.fetchall()
-            # Saat sıralaması - psycopg3'te tuple format
-            sorted_results = sorted(results, key=lambda r: datetime.strptime(r[4], "%H:%M"))
+            results_raw = cur.fetchall()
+            
+            # Tuple'ları dictionary'ye çevir ve saat sıralaması yap
+            results = []
+            for r in results_raw:
+                results.append({
+                    'id': r[0],
+                    'phone': r[1],
+                    'service': r[2], 
+                    'date': r[3],
+                    'time': r[4],
+                    'status': r[5]
+                })
+            
+            # Saat sıralaması
+            sorted_results = sorted(results, key=lambda r: datetime.strptime(r['time'], "%H:%M"))
             weekly_data[day] = sorted_results
         
         return render_template('admin_week.html', week=weekly_data)

@@ -12,8 +12,16 @@ load_dotenv()
 
 PAZAR_KAPALI = True
 
-# GEÇİCİ: İlk açılışta tablo oluşturmak için
-conn = sqlite3.connect('db.sqlite3')
+# Veritabanı dosyasını kalıcı depolama alanına yönlendirme
+def get_db():
+    # Kalıcı depolama alanında veritabanı dosyasının yolu
+    db_path = os.path.join('/mnt/data', 'db.sqlite3')
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+# Veritabanı tablolarını oluşturma
+conn = get_db()
 c = conn.cursor()
 c.execute('CREATE TABLE IF NOT EXISTS Users (id INTEGER PRIMARY KEY AUTOINCREMENT, phone TEXT UNIQUE, is_admin BOOLEAN)')
 c.execute('CREATE TABLE IF NOT EXISTS Appointments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, service TEXT, date TEXT, time TEXT, status TEXT)')

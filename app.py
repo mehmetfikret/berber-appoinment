@@ -21,7 +21,7 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 # PostgreSQL bağlantı bilgileri
 DB_CONFIG = {
     'host': os.getenv('DB_HOST'),
-    'database': os.getenv('DB_NAME'),
+    'dbname': os.getenv('DB_NAME'),
     'user': os.getenv('DB_USER'),
     'password': os.getenv('DB_PASSWORD'),
     'port': os.getenv('DB_PORT', '5432')
@@ -32,13 +32,13 @@ def get_db():
     try:
         conn = psycopg.connect(
             host=DB_CONFIG['host'],
-            dbname=DB_CONFIG['database'],
+            dbname=DB_CONFIG['dbname'],
             user=DB_CONFIG['user'],
             password=DB_CONFIG['password'],
             port=DB_CONFIG['port']
         )
         return conn
-    except psycopg.Error as e:
+    except Exception as e:
         print(f"Veritabanı bağlantı hatası: {e}")
         return None
 
@@ -75,7 +75,7 @@ def init_database():
         conn.commit()
         print("✅ Veritabanı tabloları başarıyla oluşturuldu.")
         
-    except psycopg.Error as e:
+    except Exception as e:
         print(f"Tablo oluşturma hatası: {e}")
         conn.rollback()
     finally:
@@ -155,7 +155,7 @@ def get_available_slots(date):
         
         return slots, taken
         
-    except psycopg.Error as e:
+    except Exception as e:
         print(f"Slot sorgulama hatası: {e}")
         return slots, []
     finally:
@@ -176,7 +176,7 @@ def login():
                 cur.execute('INSERT INTO Users (phone, is_admin) VALUES (%s, %s) ON CONFLICT (phone) DO NOTHING', 
                            (phone, False))
                 conn.commit()
-            except psycopg.Error as e:
+            except Exception as e:
                 print(f"Kullanıcı kayıt hatası: {e}")
                 conn.rollback()
             finally:
@@ -267,7 +267,7 @@ def user_dashboard():
                                slots=all_slots,
                                taken=taken_slots)
 
-    except psycopg.Error as e:
+    except Exception as e:
         print(f"Dashboard hatası: {e}")
         return "Bir hata oluştu", 500
     finally:
@@ -301,9 +301,12 @@ def admin_dashboard():
         all_appointments = cur.fetchall()
 
         # Randevuları ayır - psycopg3'te tuple format
-        pending = [r for r in all_appointments if r[5] == 'pending']
-        approved = [r for r in all_appointments if r[5] == 'approved']
-        rejected = [r for r in all_appointments if r[5] == 'rejected']
+        pending = [{'id': r[0], 'phone': r[1], 'service': r[2], 'date': r[3], 'time': r[4], 'status': r[5]} 
+                   for r in all_appointments if r[5] == 'pending']
+        approved = [{'id': r[0], 'phone': r[1], 'service': r[2], 'date': r[3], 'time': r[4], 'status': r[5]} 
+                    for r in all_appointments if r[5] == 'approved']
+        rejected = [{'id': r[0], 'phone': r[1], 'service': r[2], 'date': r[3], 'time': r[4], 'status': r[5]} 
+                    for r in all_appointments if r[5] == 'rejected']
 
         return render_template('admin_dashboard.html',
                                pending=pending,
@@ -316,7 +319,7 @@ def admin_dashboard():
                                today=today,
                                tomorrow=tomorrow)
 
-    except psycopg.Error as e:
+    except Exception as e:
         print(f"Admin dashboard hatası: {e}")
         return "Bir hata oluştu", 500
     finally:
@@ -350,7 +353,7 @@ def admin_week():
         
         return render_template('admin_week.html', week=weekly_data)
 
-    except psycopg.Error as e:
+    except Exception as e:
         print(f"Haftalık görünüm hatası: {e}")
         return "Bir hata oluştu", 500
     finally:
@@ -368,7 +371,7 @@ def update_status(id, status):
             cur = conn.cursor()
             cur.execute('UPDATE Appointments SET status = %s WHERE id = %s', (status, id))
             conn.commit()
-        except psycopg.Error as e:
+        except Exception as e:
             print(f"Durum güncelleme hatası: {e}")
             conn.rollback()
         finally:
@@ -406,7 +409,7 @@ def cancel_appointment(id):
             cur.execute('UPDATE Appointments SET status = %s WHERE id = %s', ('cancelled', id))
             conn.commit()
 
-    except psycopg.Error as e:
+    except Exception as e:
         print(f"İptal işlemi hatası: {e}")
         conn.rollback()
     finally:
@@ -421,7 +424,10 @@ def logout():
     return redirect('/')
 
 # Uygulama başlatıldığında veritabanını hazırla
-init_database()
+try:
+    init_database()
+except Exception as e:
+    print(f"Veritabanı başlatma hatası: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=port)

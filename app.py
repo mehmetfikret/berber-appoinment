@@ -14,11 +14,11 @@ PAZAR_KAPALI = True
 
 # Veritabanı dosyasını kalıcı depolama alanına yönlendirme
 def get_db():
-    # Kalıcı depolama alanında veritabanı dosyasının yolu
-    db_path = os.path.join('/mnt/data', 'db.sqlite3')
+    db_path = os.path.join(os.path.dirname(__file__), 'db.sqlite3')
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
+
 
 # Veritabanı tablolarını oluşturma
 conn = get_db()
@@ -35,11 +35,6 @@ app.secret_key = 'secret_key'
 # ADMIN_PHONE = 'berber123'
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 
-
-def get_db():
-    conn = sqlite3.connect('db.sqlite3')
-    conn.row_factory = sqlite3.Row
-    return conn
 
 def send_email_notification(service, date, time, phone):
     sender = os.getenv("EMAIL_ADDRESS")
